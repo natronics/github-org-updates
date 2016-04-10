@@ -3,6 +3,7 @@ from agithub import Github
 import argparse
 import datetime
 
+github_date_format = "%Y-%m-%dT%H:%M:%SZ"
 parser = argparse.ArgumentParser()
 parser.add_argument("orgname", type=str,
                     help="GitHub Organization name (github.com/orgname to use)")
@@ -19,7 +20,7 @@ now = datetime.datetime.utcnow()
 for repo in github.orgs[orgname].repos.get(type='public')[1]:
 
     reponame = repo['name']
-    updated = datetime.datetime.strptime(repo['pushed_at'], "%Y-%m-%dT%H:%M:%SZ")
+    updated = datetime.datetime.strptime(repo['pushed_at'], github_date_format)
 
     age = (now - updated).days + ((now - updated).seconds / (24*60*60.0))
 
@@ -34,7 +35,11 @@ for repo in github.orgs[orgname].repos.get(type='public')[1]:
 
         print "<ul>"
         for commit in github.repos[orgname][reponame].commits.get()[1]:
-            print "<li>%s</li>" % commit['commit']['message']
+            commit_date = datetime.datetime.strptime(commit['commit']['author']['date'], github_date_format)
+            commit_age = (now - commit_date).days + ((now - commit_date).seconds / (24*60*60.0))
+            if commit_age < 7.0:
+                print " <li>%s</li>" % commit['commit']['message']
         print "</ul>"
+
         print "\n\n"
 
